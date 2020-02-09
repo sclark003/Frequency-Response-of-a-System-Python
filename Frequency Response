@@ -1,0 +1,75 @@
+import Polarclass as polar
+from math import pi
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.close("all")
+
+def frequency_response(poles,zeros):
+    #create class instance to do polar coordinate maths
+    pol = polar.Polar_Maths()
+    #create array of angles from 0 to 2pi
+    alpha = np.linspace(0,2*pi,10000)
+    #set up empty arrays
+    z_one = []
+    z_two = []
+    z_onetheta = []
+    z_twotheta = []
+    p_one = []
+    p_two = []
+    p_onetheta = []
+    p_twotheta = []
+    zz = []
+    thetazz = []
+    pp = []
+    thetapp = []
+    response = np.zeros(len(alpha))
+    theta_resp = np.zeros(len(alpha))
+    
+    #for every value of alpha, calculate values of vectors
+    #from each zero to the poisition on the unit circle with angle alpha
+    for j in range(len(alpha)):
+        z1,thetaz1 = pol.subtract(1,alpha[j],zeros[0],zeros[1])
+        z_one = np.append(z_one,z1)
+        z_onetheta = np.append(z_onetheta,thetaz1)
+        ########################################
+        z2,thetaz2 = pol.subtract(1,alpha[j],zeros[2],zeros[3])
+        z_two = np.append(z_two,z2)
+        z_twotheta = np.append(z_twotheta,thetaz2)
+        ########################################  
+    #for every value of alpha, calculate values of vectors
+    #from each pole to the poisition on the unit circle with angle alpha
+        p1,thetap1 = pol.subtract(1,alpha[j],poles[0],poles[1])
+        p_one = np.append(p_one,p1)
+        p_onetheta = np.append(p_onetheta,thetap1)
+        ########################################
+        p2,thetap2 = pol.subtract(1,alpha[j],poles[2],poles[3])
+        p_two = np.append(p_two,p2)
+        p_twotheta = np.append(p_twotheta,thetap2)
+    
+    #calculate vector product of all zero vectors (Z)
+    #calculate vector product of all pole vectors (P)
+    for i in range(len(alpha)):
+        z,thetaz = pol.multiply(z_one[i],z_onetheta[i],z_two[i],z_twotheta[i])
+        p,thetap = pol.multiply(p_one[i],p_onetheta[i],p_two[i],p_twotheta[i])
+        zz = np.append(zz,z)
+        thetazz = np.append(thetazz,thetaz)
+        pp = np.append(pp,p)
+        thetapp = np.append(thetapp,thetap)
+    
+    #The frequency response is Z/P
+    for k in range(len(alpha)):
+        response[k],theta_resp[k] = pol.divide(zz[k],thetazz[k],pp[k],thetapp[k])
+    
+    return response,theta_resp,alpha
+
+#E.g Calculate frequency response of system with
+#poles at  0.99∠±0.62689; zeros at ±1
+poles = np.array([0.99,0.62689,0.99,-0.62689])
+zeros = np.array([1,0,-1,0])
+response,theta_resp,alpha = frequency_response(poles,zeros)
+#halve array to remove complex frequency mirror
+response = response[0:int(len(response)/2)]
+#plot vectoe magnitude to find frequency response
+plt.figure(1)
+plt.plot(response)
